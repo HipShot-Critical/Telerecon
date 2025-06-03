@@ -6,13 +6,17 @@ from tzlocal import get_localzone  # Added to get the system's local timezone
 
 # Load the CSV file into a pandas DataFrame based on the target username
 target_username = input("Enter the target username: ")
-csv_file = f'Collection/{target_username.strip("@")}/{target_username.strip("@")}_messages.csv'
+csv_file = (
+    f'Collection/{target_username}.strip("@")/'
+    f'{target_username}.strip("@")_messages.csv'
+)
 df = pd.read_csv(csv_file)
 
 # Input for custom timezone
 custom_timezone = input("Enter a custom timezone (e.g., 'Pacific/Auckland'): ")
 
-# Convert the 'Date' column to a datetime object and convert to the custom timezone
+# Convert the 'Date' column to a datetime object
+# and convert to the custom timezone
 df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d %H:%M:%S%z')
 try:
     custom_tz = timezone(custom_timezone)
@@ -23,40 +27,78 @@ except Exception as e:
     df['Date'] = df['Date'].dt.tz_convert(local_tz)
 
 # Group data by user and hour, and count the frequency of posts
-df_grouped_hourly = df.groupby([df['Date'].dt.hour, 'Username']).size().reset_index(name='post_count')
+df_grouped_hourly = df.groupby(
+    [
+        df['Date'].dt.hour, 'Username'
+    ]
+    ).size().reset_index(name='post_count')
 
 # Pivot the data for the first graph (hourly posting patterns)
-pivot_hourly = df_grouped_hourly.pivot(index='Date', columns='Username', values='post_count').fillna(0)
+pivot_hourly = df_grouped_hourly.pivot(
+    index='Date', columns='Username', values='post_count'
+).fillna(0)
 
 # Group data by user and date, and sum the daily post counts
-df_grouped_daily = df.groupby([df['Date'].dt.date, 'Username']).size().reset_index(name='post_count')
+df_grouped_daily = df.groupby(
+    [
+        df['Date'].dt.date, 'Username'
+    ]
+).size().reset_index(name='post_count')
 
 # Pivot the data for the second graph (daily posting patterns)
-pivot_daily = df_grouped_daily.pivot(index='Date', columns='Username', values='post_count').fillna(0)
+pivot_daily = df_grouped_daily.pivot(
+    index='Date', columns='Username', values='post_count'
+).fillna(0)
 
 # Calculate posting frequency based on the day of the week
 df['DayOfWeek'] = df['Date'].dt.day_name()
-df_grouped_dayofweek = df.groupby(['DayOfWeek', 'Username']).size().reset_index(name='post_count_dayofweek')
-desired_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-pivot_dayofweek = df_grouped_dayofweek.pivot(index='DayOfWeek', columns='Username',
-                                             values='post_count_dayofweek').fillna(0)
+
+df_grouped_dayofweek = df.groupby(
+    ['DayOfWeek', 'Username']
+).size().reset_index(name='post_count_dayofweek')
+
+desired_order = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday'
+]
+
+pivot_dayofweek = df_grouped_dayofweek.pivot(
+    index='DayOfWeek',
+    columns='Username',
+    values='post_count_dayofweek'
+).fillna(0)
 
 # Reorder the days of the week
 pivot_dayofweek = pivot_dayofweek.reindex(desired_order, axis=0)
 
 # Calculate posting frequency based on the day of the month
 df['DayOfMonth'] = df['Date'].dt.day
-df_grouped_dayofmonth = df.groupby(['DayOfMonth', 'Username']).size().reset_index(name='post_count_dayofmonth')
+
+df_grouped_dayofmonth = df.groupby(
+    ['DayOfMonth', 'Username']
+).size().reset_index(name='post_count_dayofmonth')
 
 # Pivot the data for the third graph (posting frequency by day of the month)
-pivot_dayofmonth = df_grouped_dayofmonth.pivot(index='DayOfMonth', columns='Username',
-                                               values='post_count_dayofmonth').fillna(0)
+pivot_dayofmonth = df_grouped_dayofmonth.pivot(
+    index='DayOfMonth',
+    columns='Username',
+    values='post_count_dayofmonth'
+).fillna(0)
 
 # Convert non-string values in 'Text' column to string
 df['Text'] = df['Text'].astype(str)
 
 # Save the visualizations to a single PDF in the target user's directory
-output_pdf = f'Collection/{target_username.strip("@")}/visualization_report_{target_username.strip("@")}.pdf'
+output_pdf = (
+    f'Collection/{target_username}.strip("@")'
+    f'/visualization_report_{target_username}.strip("@").pdf'
+)
+
 with PdfPages(output_pdf) as pdf:
     # First graph (hourly posting patterns)
     plt.figure(figsize=(10, 5))

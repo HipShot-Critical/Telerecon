@@ -1,23 +1,27 @@
-import os
 import asyncio
-from telethon import TelegramClient
+import os
+
 import pandas as pd
 from colorama import Fore, Style
-import details as ds
+from dotenv import load_dotenv
+from telethon import TelegramClient
 
-# Login details
-api_id = ds.apiID
-api_hash = ds.apiHash
-phone = ds.number
+load_dotenv()
+
+# API details
+phone = os.getenv("PH_NUMBER")
+api_id = os.getenv("API_ID")
+api_hash = os.getenv("API_HASH")
 
 
 async def main():
     client = TelegramClient(phone, api_id, api_hash)
     await client.start()
 
-    print(' ')
-    print('This tool will scrape a Telegram channel for all forwarded messages and their original source.')
-    print(' ')
+    print(
+        '\nThis tool will scrape a Telegram channel for'
+        'all forwarded messages and their original source.\n'
+    )
 
     while True:
         try:
@@ -30,7 +34,7 @@ async def main():
         except Exception:
             continue
 
-    l = []
+    channel_list = []
     source_urls = []
     count = 0
 
@@ -41,18 +45,26 @@ async def main():
                 if id is not None:
                     try:
                         ent = await client.get_entity(id)
-                        target_channel_entity = await client.get_entity(message.to_id.channel_id)
+                        target_channel_entity = await client.get_entity(
+                            message.to_id.channel_id
+                        )
                         target_channel_title = target_channel_entity.title
-                        l.append([ent.title, target_channel_title])
+                        channel_list.append([ent.title, target_channel_title])
                         source_url = f"https://t.me/{ent.username}"
                         source_urls.append(source_url)
                         count += 1
                         print(
-                            f"From {Fore.CYAN + ent.title + Style.RESET_ALL} to {Fore.YELLOW + target_channel_title + Style.RESET_ALL}")
+                            f"From ({Fore.CYAN} + {ent.title} + {Style.RESET_ALL}) to"  # noqa: E501
+                            f"({Fore.YELLOW} + {target_channel_title} + {Style.RESET_ALL})"  # noqa: E501
+                        )
                     except ValueError as e:
                         print("Skipping forward:", e)
-            except Exception as e:
-                print(f"{Fore.RED}Skipping forward: Private/Inaccessible{Style.RESET_ALL}")
+
+            except PermissionError as e:
+                print(
+                    f"{Fore.RED}Skipping forward: Private/Inaccessible:"
+                    f"{e}{Style.RESET_ALL}"
+                )
 
     # Create the folders if they don't exist
     adjacency_folder = 'Adjacency List'
@@ -60,11 +72,19 @@ async def main():
     os.makedirs(adjacency_folder, exist_ok=True)
     os.makedirs(urls_folder, exist_ok=True)
 
-    df = pd.DataFrame(l, columns=['From', 'To'])
-    df.to_csv(os.path.join(adjacency_folder, f'{channel_name}.csv'), header=False, index=False)
+    df = pd.DataFrame(channel_list, columns=['From', 'To'])
+    df.to_csv(
+        os.path.join(
+            adjacency_folder, f'{channel_name}.csv'
+        ), header=False, index=False
+    )
 
     source_df = pd.DataFrame(source_urls, columns=['SourceURL'])
-    source_df.to_csv(os.path.join(urls_folder, f'{channel_name}SourceURLs.csv'), header=False, index=False)
+    source_df.to_csv(
+        os.path.join(
+            urls_folder, f'{channel_name}SourceURLs.csv'
+        ), header=False, index=False
+    )
 
     await client.disconnect()
 

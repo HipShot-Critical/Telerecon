@@ -1,10 +1,10 @@
 from PIL import Image
-from PIL.ExifTags import TAGS, GPSTAGS
+from PIL.ExifTags import GPSTAGS
 import os
 import csv
 import folium
 from folium.plugins import MarkerCluster
-import unicodedata
+# import unicodedata
 
 
 # Function to remove non-alphanumeric characters from a string
@@ -59,7 +59,10 @@ if __name__ == "__main__":
 
     # Define the directories for media analysis and output
     media_directories = [
-        os.path.join("Collection", target_username, f"{target_username}_media"),  # Media subdirectory
+        # Media subdirectory
+        os.path.join(
+            "Collection", target_username, f"{target_username}_media"
+        ),
         os.path.join("Collection", target_username),  # Main user directory
     ]
 
@@ -68,8 +71,12 @@ if __name__ == "__main__":
     os.makedirs(output_directory, exist_ok=True)
 
     # Define output CSV and HTML map visualization filenames
-    output_csv_file = os.path.join(output_directory, f"{target_username}_gps_metadata.csv")
-    map_filename = os.path.join(output_directory, f"{target_username}_GPSmetadata_map.html")
+    output_csv_file = os.path.join(
+        output_directory, f"{target_username}_gps_metadata.csv"
+    )
+    map_filename = os.path.join(
+        output_directory, f"{target_username}_GPSmetadata_map.html"
+    )
 
     gps_found = False
     gps_locations = []
@@ -81,23 +88,28 @@ if __name__ == "__main__":
         for filename in os.listdir(media_directory):
             if filename.endswith((".jpg", ".jpeg", ".png", ".gif")):
                 image_path = os.path.join(media_directory, filename)
-                metadata = extract_metadata(image_path)
+                metadata = extract_metadata(
+                    image_path
+                )
                 if gps_info := extract_gps_metadata(image_path):
                     gps_found = True
                     gps_data = parse_gps_info(gps_info)
-                    author_bytes = metadata.get(315, "N/A")  # Author tag ID (bytes or string)
+                    # Author tag ID (bytes or string)
+                    author_bytes = metadata.get(315, "N/A")
                     if isinstance(author_bytes, bytes):
                         try:
                             author = author_bytes.decode('utf-8')
                         except UnicodeDecodeError:
-                            author = "N/A"  # Use "N/A" for non-UTF-8 encoded names
+                            # Use "N/A" for non-UTF-8 encoded names
+                            author = "N/A"
                     else:
                         author = author_bytes
 
                     # Remove non-alphanumeric characters from author name
                     author = remove_non_alphanumeric(author)
 
-                    date_time = metadata.get(306, "N/A")  # DateTimeOriginal tag ID
+                    # DateTimeOriginal tag ID
+                    date_time = metadata.get(306, "N/A")
                     camera = metadata.get(271, "N/A")  # Make tag ID
                     gps_data.update({
                         "Author": author,
@@ -111,14 +123,19 @@ if __name__ == "__main__":
     else:
         print("\033[31m" + "No GPS metadata found." + "\033[0m")
 
-    with open(output_csv_file, mode="w", newline="", encoding='utf-8') as csv_file:
+    with open(
+        output_csv_file, mode="w", newline="", encoding='utf-8'
+    ) as csv_file:
         fieldnames = ["ImageName", "Author", "DateTime", "Camera", "GPSInfo"]
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         writer.writeheader()
 
         for filename, gps_data in gps_locations:
             # Remove non-alphanumeric characters from GPSInfo
-            gps_data = {key: remove_non_alphanumeric(str(value)) for key, value in gps_data.items()}
+            gps_data = {
+                key: remove_non_alphanumeric(str(value)) for key,
+                value in gps_data.items()
+            }
             writer.writerow({
                 "ImageName": filename,
                 "Author": gps_data.get("Author", "N/A"),
@@ -139,11 +156,13 @@ if __name__ == "__main__":
             lon_deg = lon[0] + lon[1] / 60 + lon[2] / 3600
 
             popup_html = f"<b>Image:</b> {filename}<br>" \
-                         f"<b>Author:</b> {gps_data.get('Author', 'N/A')}<br>" \
-                         f"<b>Date/Time:</b> {gps_data.get('DateTime', 'N/A')}<br>" \
-                         f"<b>Camera:</b> {gps_data.get('Camera', 'N/A')}</font>"
+                         "<b>Author:</b> {gps_data.get('Author', 'N/A')}<br>" \
+                         "<b>Date/Time:</b> {gps_data.get('DateTime', 'N/A')}<br>" \
+                         "<b>Camera:</b> {gps_data.get('Camera', 'N/A')}</font>"  # noqa: E501
 
-            folium.Marker(location=[lat_deg, lon_deg], popup=popup_html).add_to(marker_cluster)
+            folium.Marker(
+                location=[lat_deg, lon_deg], popup=popup_html
+            ).add_to(marker_cluster)
 
         # Fit the map to the bounds of the plotted data
         my_map.fit_bounds(marker_cluster.get_bounds())
@@ -151,7 +170,9 @@ if __name__ == "__main__":
         # Save the map to an HTML file
         my_map.save(map_filename)
 
-    print(f"GPS metadata analysis completed. Results saved to {output_csv_file}")
+    print(
+        f"GPS metadata analysis completed. Results saved to {output_csv_file}"
+    )
 
     # Ask if the user wants to return to the launcher
     launcher = input('Do you want to return to the launcher? (y/n)')

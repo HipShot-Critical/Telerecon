@@ -19,22 +19,39 @@ def scrape_subscriber_counts(channel_urls):
                     c for c in member_count if c.isdigit()
             ):
                 print(
-                    f"Channel: {Fore.BLUE + url + Style.RESET_ALL} | Members: {Fore.GREEN + subscriber_count + Style.RESET_ALL}")
+                    f"Channel: {Fore.BLUE} + {url} + {Style.RESET_ALL}"
+                    " | Members: "
+                    f"{Fore.GREEN} + {subscriber_count} + {Style.RESET_ALL}"
+                )
                 total_subscribers += int(subscriber_count)
             else:
-                print(f"Channel: {Fore.BLUE + url + Style.RESET_ALL} | Member count not available")
+                print(
+                    f"Channel: {Fore.BLUE} + {url} + {Style.RESET_ALL}"
+                    "| Member count not available"
+                )
         else:
-            print(f"Channel: {Fore.BLUE + url + Style.RESET_ALL} | Member count not found")
+            print(
+                f"Channel: {Fore.BLUE} + {url} + {Style.RESET_ALL}"
+                "| Member count not found"
+            )
 
     print(f"\nTotal Members: {total_subscribers}")
-    current_time = datetime.now(timezone.utc).astimezone().strftime('%H:%M:%S, %d %B %Y %Z%z')
+    current_time = datetime.now(
+        timezone.utc
+    ).astimezone().strftime('%H:%M:%S, %d %B %Y %Z%z')
+
     print(f"Census Results as of {current_time}\n")
     print(
-        f"{Fore.RED}Please Note: This total does not account for duplication. A single user may belong to multiple channels and therefore be included multiple times within this count.{Style.RESET_ALL}")
+        f"{Fore.RED}Please Note: This total does not account for duplication."
+        "A single user may belong to multiple channels and therefore be"
+        f"included multiple times within this count.{Style.RESET_ALL}")
 
 
 def main():
-    channel_urls_file = input("Enter the name of the file containing the list of channel URLs (csv or txt): ")
+    channel_urls_file = input(
+        "Enter the name of the file containing the list of"
+        "channel URLs (csv or txt): "
+    )
 
     # Read the channel URLs from the file
     with open(channel_urls_file) as file:

@@ -1,8 +1,10 @@
 import os
-import pandas as pd
-import networkx as nx
+
 import matplotlib.pyplot as plt
-import numpy as np
+import networkx as nx
+import pandas as pd
+
+# import numpy as np
 
 # Ask the user for the target username
 target_username = input("Enter the target username (e.g., @Johnsmith): ")
@@ -12,7 +14,9 @@ target_username = target_username.lstrip('@')  # Remove leading '@' if present
 directory_path = f"Collection/{target_username}"
 
 # Load the network data CSV file
-network_csv_path = os.path.join(directory_path, f"{target_username}_network.csv")
+network_csv_path = os.path.join(
+    directory_path, f"{target_username}_network.csv"
+)
 if not os.path.exists(network_csv_path):
     print(f"Network data file not found: {network_csv_path}")
 else:
@@ -38,8 +42,14 @@ else:
         receiver_last_name = row['Receiver_LastName']
 
         # Create formatted labels with NaN values replaced by blank spaces
-        sender_label = f"{sender_first_name} {sender_last_name} (@{sender_username})\nUserID: {sender_user_id}"
-        receiver_label = f"{receiver_first_name} {receiver_last_name} (@{receiver_username})\nUserID: {receiver_user_id}"
+        sender_label = (
+            f"{sender_first_name} {sender_last_name}"
+            f"(@{sender_username})\nUserID: {sender_user_id}"
+        )
+        receiver_label = (
+            f"{receiver_first_name} {receiver_last_name}"
+            f"(@{receiver_username})\nUserID: {receiver_user_id}"
+        )
 
         # Add nodes with formatted labels
         G.add_node(sender_user_id, label=sender_label)
@@ -58,13 +68,20 @@ else:
             interaction_count[(sender_user_id, receiver_user_id)] = 1
 
         # Add edges with interaction count as labels
-        G.add_edge(sender_user_id, receiver_user_id, interactions=interaction_count[(sender_user_id, receiver_user_id)])
+        G.add_edge(
+            sender_user_id,
+            receiver_user_id,
+            interactions=interaction_count[
+                (sender_user_id, receiver_user_id)
+            ]
+        )
 
     # Create the network visualization with improved styling and dynamic layout
     plt.figure(figsize=(14, 10))
 
     # Customize the spring layout with better spacing
-    pos = nx.spring_layout(G, seed=42, k=0.15, iterations=50)  # Adjust 'k' and 'iterations' as needed
+    # Adjust 'k' and 'iterations' as needed
+    pos = nx.spring_layout(G, seed=42, k=0.15, iterations=50)
 
     labels = nx.get_node_attributes(G, 'label')
     interactions = nx.get_edge_attributes(G, 'interactions')
@@ -83,19 +100,38 @@ else:
     nx.draw_networkx_edges(G, pos, width=edge_width, edge_color=edge_color)
 
     # Calculate the label positions to avoid cutoff
-    label_positions = {node: (pos[node][0], pos[node][1] - 0.02) for node in G.nodes()}
+    label_positions = {
+        node: (pos[node][0], pos[node][1] - 0.02) for node in G.nodes()
+    }
 
-    nx.draw_networkx_labels(G, label_positions, labels, font_size=font_size, font_color=font_color, font_weight='bold')
+    nx.draw_networkx_labels(
+        G,
+        label_positions, labels,
+        font_size=font_size,
+        font_color=font_color,
+        font_weight='bold'
+    )
 
     # Position edge labels to avoid overlap with nodes
     for (u, v), label in edge_labels.items():
         x = (pos[u][0] + pos[v][0]) / 2  # Calculate x-coordinate
         y = (pos[u][1] + pos[v][1]) / 2  # Calculate y-coordinate
-        plt.text(x, y, label, size=font_size, color=font_color, ha='center', va='center')
+        plt.text(
+            x,
+            y,
+            label,
+            size=font_size,
+            color=font_color,
+            ha='center',
+            va='center'
+        )
 
     plt.title(f"User Interaction Network for {target_username}")
 
     # Save the visualization to a file
-    network_viz_path = os.path.join(directory_path, f"{target_username}_network_visualization.png")
-    plt.savefig(network_viz_path, bbox_inches='tight', pad_inches=0.1, dpi=400)  # Adjust DPI for higher resolution
+    network_viz_path = os.path.join(
+        directory_path, f"{target_username}_network_visualization.png"
+    )
+    # Adjust DPI for higher resolution
+    plt.savefig(network_viz_path, bbox_inches='tight', pad_inches=0.1, dpi=400)
     print(f"Network visualization saved to: {network_viz_path}")

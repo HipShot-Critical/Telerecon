@@ -1,11 +1,13 @@
+import contextlib
+import os
+import re
+from collections import Counter
+
 import pandas as pd
 import spacy
-import re
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
-from collections import Counter
-import os
+from reportlab.platypus import Paragraph, SimpleDocTemplate
 
 
 # Function to create the target directory if it doesn't exist
@@ -20,7 +22,10 @@ target_username = input("Enter the target username: ")
 target_username = target_username.strip("@")  # Remove @ symbol if present
 csv_file = f'Collection/{target_username}/{target_username}_messages.csv'
 if not os.path.exists(csv_file):
-    print(f"Error: CSV file not found for {target_username}. Make sure the directory structure is correct.")
+    print(
+        f"Error: CSV file not found for {target_username}."
+        "Make sure the directory structure is correct."
+    )
     exit()
 
 df = pd.read_csv(csv_file)
@@ -33,14 +38,15 @@ nlp = spacy.load('en_core_web_sm')
 def preprocess_text(text):
     if isinstance(text, str):
         text = re.sub(r'http\S+', '', text)  # Remove URLs
-        text = re.sub(r'[^a-zA-Z0-9\s]', '', text)  # Remove non-alphanumeric characters
-        text = re.sub(r'(?<=\w)[^\w\s]+(?=\w)', ' ',
-                      text)  # Replace punctuation between alphanumeric characters with spaces
+        text = re.sub(r'[^a-zA-Z0-9\s]', '', text)  # Remove non-alphanumeric characters  # noqa: E501
+        text = re.sub(
+            r'(?<=\w)[^\w\s]+(?=\w)', ' ',
+            text
+        )  # Replace punctuation between alphanumeric characters with spaces
     return text
 
 
 # Dictionary to store named entities of each category with counts
-import contextlib
 entity_categories = {
     'PERSON': Counter(),
     'ORG': Counter(),
@@ -67,18 +73,27 @@ for index, row in df.iterrows():
 
 # Create and export PDF with sorted entity tags
 def export_entities_to_pdf(entity_categories, filename='entity_tags.pdf'):
-    doc = SimpleDocTemplate(f'Collection/{target_username}/{filename}', pagesize=letter)
+    doc = SimpleDocTemplate(
+        f'Collection/{target_username}/{filename}',
+        pagesize=letter
+    )
     styles = getSampleStyleSheet()
     story = []
 
-    # Mapping for replacing 'ORG' with 'ORGANISATION' and 'GPE' with 'LOCATION'
-    category_mapping = {'ORG': 'ORGANISATION', 'GPE': 'LOCATION'}
+    # Mapping for replacing 'ORG' with 'ORGANIZATION' and 'GPE' with 'LOCATION'
+    category_mapping = {'ORG': 'ORGANIZATION', 'GPE': 'LOCATION'}
 
     # Sort entities within each category by count in descending order
     for category, entities in entity_categories.items():
         if entities:
-            sorted_entities = sorted(entities.items(), key=lambda x: x[1], reverse=True)
-            entity_str = ", ".join([f"{entity} (x{count})" for entity, count in sorted_entities])
+            sorted_entities = sorted(
+                entities.items(),
+                key=lambda x: x[1],
+                reverse=True
+            )
+            entity_str = ", ".join(
+                [f"{entity} (x{count})" for entity, count in sorted_entities]
+            )
             category_display = category_mapping.get(category, category)
             story.extend(
                 (
